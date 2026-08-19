@@ -376,11 +376,29 @@ static void bucket_get(time_t sec, uint64_t *up, uint64_t *dn) {
     else                    { *up = 0;        *dn = 0; }
 }
 
+/* SHM contract: transferring iff status says RETR/STOR/APPE AND
+ * currentdir ends with the status filename (the daemon points
+ * currentdir at the file for the duration of the transfer). */
 static char slot_class(const struct ONLINE *o) {
-    if (!strncasecmp(o->status, "RETR", 4)) return 'D';
-    if (!strncasecmp(o->status, "STOR", 4)) return 'U';
-    if (!strncasecmp(o->status, "APPE", 4)) return 'U';
-    return 0;
+    char c;
+    if      (!strncasecmp(o->status, "RETR", 4)) c = 'D';
+    else if (!strncasecmp(o->status, "STOR", 4)) c = 'U';
+    else if (!strncasecmp(o->status, "APPE", 4)) c = 'U';
+    else return 0;
+
+    char fn[256];
+    const char *a = o->status + 4;
+    while (*a == ' ') a++;
+    snprintf(fn, sizeof(fn), "%s", basename_of(a));
+    size_t fl = strlen(fn);
+    while (fl && (fn[fl - 1] == '\r' || fn[fl - 1] == '\n' || fn[fl - 1] == ' '))
+        fn[--fl] = '\0';
+    if (!fl) return 0;
+
+    size_t dl = strlen(o->currentdir);
+    if (dl < fl || strcmp(o->currentdir + dl - fl, fn) != 0) return 0;
+    if (dl > fl && o->currentdir[dl - fl - 1] != '/') return 0;
+    return c;
 }
 
 static void slot_reset(slotstat_t *s) {

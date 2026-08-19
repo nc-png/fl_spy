@@ -21,7 +21,7 @@ The config supplies `rootpath`, `datapath`, `ipc_key` and the log paths (`xferlo
 
 ## Data sources
 
-- **ONLINE SHM segment** — sessions, live transfer counters. The slot count comes from the segment size (not config), so a max_users mismatch can't skew the view.  The daemon PID is taken from the segment's creator PID; after a daemon restart the tool re-attaches automatically.
+- **ONLINE SHM segment** — sessions, live transfer counters. The slot count comes from the segment size (not config), so a max_users mismatch can't skew the view.  The daemon PID is taken from the segment's creator PID; after a daemon restart the tool re-attaches automatically.  A slot counts as an active transfer only while `status` says RETR/STOR/APPE **and** `currentdir` ends with that filename.
 - **xferlog tail** — per-user transfer history in the detail overlay. The transfer-time field unit follows the config's `xferlog_millisecs`.
 - **glftpd.log + login.log + sysop.log tails** — the activity view (tag column: G/L/S).  Rotation and truncation are handled.
 

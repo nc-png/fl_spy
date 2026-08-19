@@ -1,4 +1,10 @@
-/* fl_spy — glftpd-compatible ONLINE shared-memory layout. */
+/* fl_spy — glftpd-compatible ONLINE shared-memory layout.
+ *
+ * This is a standalone copy of the daemon's ABI (and glftpd's
+ * <online.h>): 904 bytes per slot, pack(4), fixed-width fields.
+ * The layout is frozen — external tools attached to the same SysV
+ * segment depend on it byte-for-byte.  Do not "modernize" the types.
+ */
 #ifndef FL_SPY_ONLINE_H
 #define FL_SPY_ONLINE_H
 
