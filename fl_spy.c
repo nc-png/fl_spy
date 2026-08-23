@@ -977,7 +977,8 @@ static void draw_overlay(int H, int W) {
         if (k >= nsess) continue;
         int s = u->slots[k];
         struct ONLINE *o = &g_snap[s];
-        char on[24], idl[24], act[160] = "idle";
+        char on[24], idl[24], act[160];
+        snprintf(act, sizeof(act), "IDLE in %.128s", o->currentdir);
         fmt_dur(nowt - o->login_time, on, sizeof(on));
         fmt_dur(slot_idle(o, nowt), idl, sizeof(idl));
         if (g_ss[s].cls) {
