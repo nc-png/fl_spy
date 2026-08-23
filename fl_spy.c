@@ -225,10 +225,18 @@ static int shm_attach(void) {
     return 0;
 }
 
-/* Segment gone (daemon restart) = EIDRM/EINVAL on IPC_STAT → reattach. */
+/* Daemon restart = the key now resolves to a different shmid.  IPC_STAT
+ * on the old id is NOT the signal: while we hold the attach, IPC_RMID
+ * only marks the segment SHM_DEST and rebinds its key to IPC_PRIVATE —
+ * the id stays statable, so a stat-only check reads a dead segment
+ * forever.  Resolve the key every tick and compare. */
 static void shm_check(void) {
     struct shmid_ds ds;
-    if (g_shmid >= 0 && shmctl(g_shmid, IPC_STAT, &ds) == 0) { g_tgid = ds.shm_cpid; return; }
+    int id = shmget(g_key, 0, 0);
+    if (id >= 0 && id == g_shmid && shmctl(g_shmid, IPC_STAT, &ds) == 0) {
+        g_tgid = ds.shm_cpid;
+        return;
+    }
     shm_detach();
     shm_attach();
 }
