@@ -781,13 +781,13 @@ static void draw_header(int w) {
 
 static void draw_users(int top, int h, int w) {
     static const char *sortname[] = {"speed", "name", "sessions"};
-    attron(COLOR_PAIR(P_HDR));
+    attron(COLOR_PAIR(P_HDR) | A_BOLD | A_UNDERLINE);
     mvhline(top, 0, ' ', w);
     mvprintw(top, 0, " %-14s %-9s %4s %3s %3s %11s %11s  %-6s %s",
              "USER", "GROUP", "SESS", "UL", "DL", "UP-SPD", "DN-SPD", "IDLE",
              "WHERE/WHAT");
     mvprintw(top, w - 14, "sort:%s", sortname[g_sort[V_USERS]]);
-    attroff(COLOR_PAIR(P_HDR));
+    attroff(COLOR_PAIR(P_HDR) | A_BOLD | A_UNDERLINE);
 
     int lh = h - 1;
     if (g_cursor < g_scroll) g_scroll = g_cursor;
@@ -836,12 +836,12 @@ static void draw_users(int top, int h, int w) {
 
 static void draw_xfers(int top, int h, int w) {
     static const char *sortname[] = {"speed", "user", "elapsed"};
-    attron(COLOR_PAIR(P_HDR));
+    attron(COLOR_PAIR(P_HDR) | A_BOLD | A_UNDERLINE);
     mvhline(top, 0, ' ', w);
     mvprintw(top, 0, " %-14s %-3s %11s %9s %8s  %s",
              "USER", "DIR", "SPEED", "XFERRED", "ELAPSED", "FILE");
     mvprintw(top, w - 14, "sort:%s", sortname[g_sort[V_XFERS]]);
-    attroff(COLOR_PAIR(P_HDR));
+    attroff(COLOR_PAIR(P_HDR) | A_BOLD | A_UNDERLINE);
 
     int lh = h - 1;
     if (g_cursor < g_scroll) g_scroll = g_cursor;
@@ -877,11 +877,11 @@ static void draw_xfers(int top, int h, int w) {
 }
 
 static void draw_log(int top, int h, int w) {
-    attron(COLOR_PAIR(P_HDR));
+    attron(COLOR_PAIR(P_HDR) | A_BOLD | A_UNDERLINE);
     mvhline(top, 0, ' ', w);
     mvprintw(top, 0, " ACTIVITY  (glftpd.log + login.log + sysop.log)%s",
              g_log_follow ? "  [follow]" : "  [scroll — End to follow]");
-    attroff(COLOR_PAIR(P_HDR));
+    attroff(COLOR_PAIR(P_HDR) | A_BOLD | A_UNDERLINE);
 
     int lh = h - 1;
     int total = g_actn;
@@ -1254,7 +1254,10 @@ int main(int argc, char **argv) {
         init_pair(P_OK,    COLOR_GREEN, -1);
         init_pair(P_WARN,  COLOR_YELLOW,-1);
         init_pair(P_ERR,   COLOR_RED,   -1);
-        init_pair(P_HDR,   COLOR_BLACK, COLOR_WHITE);
+        /* Column headers are a rule, not a block: bold on the default
+           background + underline.  A filled background is reserved for the
+           A_REVERSE cursor row so the selection is the only solid bar. */
+        init_pair(P_HDR,   -1,          -1);
     }
 
     long last_sample = 0;
