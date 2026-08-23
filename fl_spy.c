@@ -1154,7 +1154,7 @@ static void render(void) {
         if (gh > 14) gh = 14;
         gh &= ~1;               /* even interior → UP and DN halves equal */
     }
-    int list_top = 2;
+    int list_top = 3;           /* blank row: summary line needs air */
     int list_h = H - list_top - gh - 1;
     switch (g_view) {
     case V_USERS: draw_users(list_top, list_h, W); break;
