@@ -779,6 +779,17 @@ static void draw_header(int w) {
     }
 }
 
+/* Selection bar: rows end at their own last character, so plain A_REVERSE
+ * gives a ragged highlight that jumps as you arrow through.  Repaint the
+ * cursor row's tail so every selection is the same width: widest visible
+ * row + 1, never narrower than minw. */
+static void sel_extend(int y, int x0, int maxend, int minw, int w) {
+    int end = maxend + 1;
+    if (end < minw) end = minw;
+    if (end > w) end = w;
+    if (end > x0) mvchgat(y, x0, end - x0, A_REVERSE, 0, NULL);
+}
+
 static void draw_users(int top, int h, int w) {
     static const char *sortname[] = {"speed", "name", "sessions"};
     attron(COLOR_PAIR(P_HDR) | A_BOLD | A_UNDERLINE);
@@ -786,6 +797,7 @@ static void draw_users(int top, int h, int w) {
     mvprintw(top, 0, " %-14s %-9s %4s %3s %3s %11s %11s  %-6s %s",
              "USER", "GROUP", "SESS", "UL", "DL", "UP-SPD", "DN-SPD", "IDLE",
              "WHERE/WHAT");
+    int hdrend = getcurx(stdscr) + 8;   /* selection bar floor: past the header */
     mvprintw(top, w - 14, "sort:%s", sortname[g_sort[V_USERS]]);
     attroff(COLOR_PAIR(P_HDR) | A_BOLD | A_UNDERLINE);
 
@@ -793,6 +805,7 @@ static void draw_users(int top, int h, int w) {
     if (g_cursor < g_scroll) g_scroll = g_cursor;
     if (g_cursor >= g_scroll + lh) g_scroll = g_cursor - lh + 1;
 
+    int maxend = 0, curend = -1, cury = 0;
     for (int r = 0; r < lh; r++) {
         int i = g_scroll + r;
         int y = top + 1 + r;
@@ -830,8 +843,10 @@ static void draw_users(int top, int h, int w) {
         printw("%11s %11s  %-6s %.*s", su, sd, si,
                w - 72 > 0 ? w - 72 : 0, what);
         if (!active && i != g_cursor) attroff(A_DIM);
-        if (i == g_cursor) attroff(A_REVERSE);
+        if (i == g_cursor) { attroff(A_REVERSE); curend = getcurx(stdscr); cury = y; }
+        if (getcurx(stdscr) > maxend) maxend = getcurx(stdscr);
     }
+    if (curend >= 0) sel_extend(cury, curend, maxend, hdrend, w);
 }
 
 static void draw_xfers(int top, int h, int w) {
@@ -840,6 +855,7 @@ static void draw_xfers(int top, int h, int w) {
     mvhline(top, 0, ' ', w);
     mvprintw(top, 0, " %-14s %-3s %11s %9s %8s  %s",
              "USER", "DIR", "SPEED", "XFERRED", "ELAPSED", "FILE");
+    int hdrend = getcurx(stdscr) + 8;   /* selection bar floor: past the header */
     mvprintw(top, w - 14, "sort:%s", sortname[g_sort[V_XFERS]]);
     attroff(COLOR_PAIR(P_HDR) | A_BOLD | A_UNDERLINE);
 
@@ -848,6 +864,7 @@ static void draw_xfers(int top, int h, int w) {
     if (g_cursor >= g_scroll + lh) g_scroll = g_cursor - lh + 1;
 
     time_t nowt = time(NULL);
+    int maxend = 0, curend = -1, cury = 0;
     for (int r = 0; r < lh; r++) {
         int i = g_scroll + r;
         int y = top + 1 + r;
@@ -872,8 +889,10 @@ static void draw_xfers(int top, int h, int w) {
         printw("%11s", sp);
         if (stalled) attroff(COLOR_PAIR(P_ERR) | A_BOLD);
         printw(" %9s %8s  %.*s", sz, el, w - 54 > 0 ? w - 54 : 0, file);
-        if (i == g_cursor) attroff(A_REVERSE);
+        if (i == g_cursor) { attroff(A_REVERSE); curend = getcurx(stdscr); cury = y; }
+        if (getcurx(stdscr) > maxend) maxend = getcurx(stdscr);
     }
+    if (curend >= 0) sel_extend(cury, curend, maxend, hdrend, w);
 }
 
 static void draw_log(int top, int h, int w) {
